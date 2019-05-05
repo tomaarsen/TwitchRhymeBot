@@ -26,10 +26,8 @@ class Database:
         with sqlite3.connect(self.db_name) as conn:
             cur = conn.cursor()
             if values is None:
-                #print(sql)
                 cur.execute(sql)
             else:
-                #print(sql, values)
                 cur.execute(sql, values)
             conn.commit()
             if fetch:

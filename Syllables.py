@@ -141,7 +141,6 @@ class Syllables:
             # Otherwise get the end of the tag (aka the first space after the @ symbol)
             end = sentence.find(" ", start)
             sentence = sentence.replace(sentence[start:end + 1 if end != -1 else end], "")
-            print("in while")
         return sentence
 
     def __syllable_from_word(self, word):
