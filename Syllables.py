@@ -22,52 +22,40 @@ class Syllables:
 
         # Sentences shouldn't be too long
         if len(split_stripped_sentence) > 12:
-            #logger.debug(f"Sentence is too long: {len(split_stripped_sentence)} words.")
             return None
         
         # If the last word is not in the cmudict, we can't work with it
         if last_word not in self.dict:
-            #logger.debug("Last word isnt in cmudict")
             return None
         
+        # If the last word has too few sounds
         if len(self.dict[last_word][0]) < 3:
-            #logger.debug("Last word has too few sounds")
             return None
         
-        # Amount of syllables should not be too high
-        #if self.count_syllables(stripped_sentence) > 13:
-        #    logger.info(f"Too many syllables: {self.syllables}")
-        #    return None
-
+        # Count the syllables for this sentence
         self.count_syllables(stripped_sentence)
 
         # Set the level set for the rhyming
         self.get_level(last_word)
 
-        start_t = time.time()
         # Get a list of words that seem to rhyme with the last word
         rhymes = self.get_rhyming_words(last_word)
+
         # If there are no rhymes found, return None
         if len(rhymes) == 0:
-            #logger.debug("No possible rhymes found")
             return None
-        #print("Generating rhymes took", time.time() - start_t)
 
-        start_t = time.time()
         out = self.get_sentence(rhymes)
-        #print("Generating sentence took", time.time() - start_t)
         return out
 
-        #return (rhymes, self.syllables)
-    
     def get_level(self, word):
         # The level is 3, unless the word contains 3 sounds, in which case it is 2.
         # word should never have < 3 sounds. This was ruled out in attempt_to_rhyme()
-        self.level = min(3, len(self.dict[word][0]) - 1)
+        self.level = min(4, len(self.dict[word][0]) - 1)
 
     def get_sentence(self, rhymes):
         # Get the inputs from the rhymes as outputs, and randomly shuffle them
-        inputs = self.db.get_inputs(rhymes)
+        inputs = self.db.get_final_inputs(rhymes)
         random.shuffle(inputs)
         
         for tup in inputs:
@@ -85,11 +73,12 @@ class Syllables:
             return None
 
         # If we have our goal, return with our success
-        if syllable_count == self.syllables:
+        if syllable_count == self.syllables and len(total) > 1 and self.db.in_start(total[0], total[1]):
             return " ".join(total)
 
         # Get new inputs and outputs for recursion
         new_inputs = self.db.get_previous_double(input2, output1)
+        random.shuffle(new_inputs)
         new_output1 = input2
 
         # If no more branches can be found

@@ -20,6 +20,7 @@ class RhymeBot:
         
         # Fill previously initialised variables with data from the settings.txt file
         Settings(self)
+        # Set up rhyming backend
         self.s = Syllables(self.chan)
 
         self.ws = TwitchWebsocket(host=self.host, 
@@ -50,15 +51,27 @@ class RhymeBot:
                 if m.message.startswith(("!", "/", ".")):
                     return
 
+                # Get the rhyming sentence, if one exists
                 sentence = self.s.attempt_to_rhyme(m.message)
 
                 if sentence is not None:
-                    logging.info(f"Input:  \"{m.message}\"" + " will be ignored" * ((len(m.message.split(" ")) < 3 and len(sentence.split(" ")) < 3) or len(m.message.split(" ")) > 8))
-                    logging.info(f"Output: \"{sentence}\"")
-                    logging.info("")
-                    if self.prev_message_t + self.cooldown < time.time():
-                        self.ws.send_message(sentence)
+                    # If the previous message has been "self.cooldown" seconds ago,
+                    # and the initial message and rhyming message are not both less than 4 words
+                    # and the initial message and rhyming message are not both larger than 9 words
+                    if self.prev_message_t + self.cooldown < time.time() and not (len(m.message.split(" ")) < 4 or len(sentence.split(" ")) < 4 or len(m.message.split(" ")) > 9 or len(sentence.split(" ")) > 9):
+                        # Reply with the rhyming sentence with the SingsNote emote attached
+                        self.ws.send_message(sentence + " SingsNote")
+                        # Reset time for previous message
                         self.prev_message_t = time.time()
+                        # Logging
+                        logging.info(f"Input:  \"{m.message}\"")
+                        logging.info(f"Output: \"{sentence}\"")
+                        logging.info("")
+                    else:
+                        # Logging under debug
+                        logging.debug(f"Input:  \"{m.message}\"" + " will be ignored")
+                        logging.debug(f"Output: \"{sentence}\"")
+                        logging.debug("")
 
         except Exception as e:
             logging.exception(e)
