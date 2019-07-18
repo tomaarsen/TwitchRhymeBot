@@ -18,7 +18,6 @@ class Database:
             if values is None:
                 cur.execute(sql)
             else:
-                #print(sql, values)
                 cur.execute(sql, values)
             conn.commit()
             if fetch:
@@ -26,23 +25,23 @@ class Database:
     
     def get_inputs(self, rhymes):
         if len(rhymes) > 1:
-            return self.execute(f"SELECT input1, input2, output1 FROM MarkovGrammar WHERE output1 IN {tuple(rhymes)};", fetch=True)
+            return self.execute(f"SELECT word1, word2, word3 FROM MarkovGrammar WHERE word3 IN ({', '.join(['?' for _ in rhymes])});", values=(tuple(rhymes)), fetch=True)
         else:
-            return self.execute(f"SELECT input1, input2, output1 FROM MarkovGrammar WHERE output1 = ?;", values=(list(rhymes)[0], ), fetch=True)
+            return self.execute(f"SELECT word1, word2, word3 FROM MarkovGrammar WHERE word3 = ?;", values=(list(rhymes)[0], ), fetch=True)
     
     def get_final_inputs(self, rhymes):
         # Modified version of get_inputs which only looks for cases where the sentence ends
         if len(rhymes) > 1:
-            return self.execute(f"SELECT input1, input2 FROM MarkovGrammar WHERE input2 IN {tuple(rhymes)} AND output1 = '<END>';", fetch=True)
+            return self.execute(f"SELECT word1, word2 FROM MarkovGrammar WHERE word2 IN ({', '.join(['?' for _ in rhymes])}) AND word3 = '<END>';", values=(tuple(rhymes)), fetch=True)
         else:
-            return self.execute(f"SELECT input1, input2 FROM MarkovGrammar WHERE input2 = ? AND output1 = '<END>';", values=(list(rhymes)[0], ), fetch=True)
+            return self.execute(f"SELECT word1, word2 FROM MarkovGrammar WHERE word2 = ? AND word3 = '<END>';", values=(list(rhymes)[0], ), fetch=True)
     
-    def get_previous_double(self, input2, output1):
-        return self.execute(f"SELECT input1 FROM MarkovGrammar WHERE input2 = ? AND output1 = ?;", values=(input2, output1), fetch=True)
+    def get_previous_double(self, word2, word3):
+        return self.execute(f"SELECT word1 FROM MarkovGrammar WHERE word2 = ? AND word3 = ?;", values=(word2, word3), fetch=True)
     
-    def get_previous_single(self, output1):
-        return self.execute(f"SELECT input1 FROM MarkovGrammar WHERE output1 = ?;", values=(output1), fetch=True)
+    def get_previous_single(self, word3):
+        return self.execute(f"SELECT word2 FROM MarkovGrammar WHERE word3 = ?;", values=(word3), fetch=True)
     
-    def in_start(self, output1, output2):
-        # Checks if output1 and output2 are the start of a sentence
-        return len(self.execute(f"SELECT count FROM MarkovStart WHERE output1 = ? AND output2 = ?;", values=(output1, output2,), fetch=True)) > 0
+    def in_start(self, word1, word2):
+        # Checks if word1 and word2 are the start of a sentence
+        return len(self.execute(f"SELECT occurances FROM MarkovStart WHERE word1 = ? AND word2 = ?;", values=(word1, word2,), fetch=True)) > 0
