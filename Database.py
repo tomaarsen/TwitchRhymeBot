@@ -31,6 +31,7 @@ class Database:
     
     def get_final_inputs(self, rhymes):
         # Modified version of get_inputs which only looks for cases where the sentence ends
+        # TODO: Fix sqlite3.OperationalError: too many SQL variables
         if len(rhymes) > 1:
             return self.execute(f"SELECT word1, word2 FROM MarkovGrammar WHERE word2 IN ({', '.join(['?' for _ in rhymes])}) AND word3 = '<END>';", values=(tuple(rhymes)), fetch=True)
         else:
